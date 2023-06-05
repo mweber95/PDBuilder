@@ -50,7 +50,14 @@ class CheckPossibilities:
                         print(f'Found TER between two ATOMS with same ChainIdentifier')
 
     def check_chain(self) -> None:
-        pass
+        with open(self.filename, 'r') as file:
+            file_content: list = file.readlines()
+            atom_lines: list[str] = [atom_line[21].strip() for atom_line in file_content
+                                     if atom_line.startswith('ATOM') and not atom_line[21]]
+            if not atom_lines:
+                pass
+                # TODO search for all indices with ATOM at beginning
+                # TODO set edit_chain to true
 
     def check_drop_rna_dna(self) -> None:
         pass
