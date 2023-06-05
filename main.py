@@ -1,14 +1,14 @@
-from helper.parser import parse_arguments
+from src.parser import parse_arguments
+from src.helper import get_possibilities, compare_args_and_possibility
 
 
 if __name__ == "__main__":
     args = parse_arguments()
-    if args.switch_rna_dna:
-        with open(args.filename) as file:
+    operations: dict = get_possibilities(args)
+    with open(args.filename) as file:
+        if args.ter:
             pass
-        # open file
-            # detect what is going on
-            # if elif else what needs to be done
-        # save file
-    if args.drop_rna_dna:
-        pass
+        if args.chain_id:
+            pass
+        if args.rna_dna:
+            pass
