@@ -1,23 +1,56 @@
 import argparse
 
 
-def compare_args_and_possibility(args: argparse.Namespace):
-    pass
+def compare_args_and_possibility(args: argparse.Namespace) -> dict:
+    pdb_edits: dict = get_possibilities(args)
+    possible_edits: list = [arg for arg in vars(args) if arg in pdb_edits and pdb_edits[arg]]
+    desired_edits = [k for k, v in vars(args).items() if v and type(v) == bool]
+    edit_intersection = set(desired_edits).intersection(set(possible_edits))
+    return {k: v[1] for k, v in pdb_edits.items() if k in edit_intersection}
 
 
 def get_possibilities(args: argparse.Namespace):
     check = CheckPossibilities(args)
-    return {'ter': check.edit_ter,
-            'ter_lines' : check.ter_lines,
-            'chain_id': check.edit_chain,
-            'chain_id_lines': check.chain_lines,
-            'rna_dna': check.edit_rna_dna,
-            'rna_dna_lines': check.rna_dna_lines}
+    return {'ter': (check.edit_ter, check.ter_lines),
+            'chain_id': (check.edit_chain, check.chain_lines),
+            'rna_dna': (check.edit_rna_dna, check.rna_dna_lines)}
+
+
+def get_file_content_input_file(filename: str) -> list[str]:
+    with open(filename, 'r') as file:
+        file_content = file.readlines()
+    return file_content
+
+
+def alter_ter(content: list[str], edits: list) -> list[str]:
+    altered_content = []
+    for i, line in enumerate(content):
+        if i not in edits:
+            altered_content.append(line)
+    return altered_content
+
+
+def alter_chain(content: list[str], edits: list) -> list[str]:
+    altered_content = []
+    for i, line in enumerate(content):
+        if i in edits:
+            line = line[:21] + 'A' + line[22:]
+        altered_content.append(line)
+    return altered_content
+
+
+def alter_rna_dna(content: list[str], edits: list) -> list[str]:
+    altered_content = []
+    for i, line in enumerate(content):
+        if i in edits:
+            line = line[:18] + ' ' + line[18:]
+        altered_content.append(line)
+    return altered_content
 
 
 class CheckPossibilities:
     def __init__(self, args: argparse.Namespace):
-        self.filename: str = args.filename
+        self.filename: str = args.input_filename
         self.edit_ter: bool = False
         self.ter_lines: list[int] = []
         self.edit_chain: bool = False
@@ -52,12 +85,23 @@ class CheckPossibilities:
     def check_chain(self) -> None:
         with open(self.filename, 'r') as file:
             file_content: list = file.readlines()
-            atom_lines: list[str] = [atom_line[21].strip() for atom_line in file_content
-                                     if atom_line.startswith('ATOM') and not atom_line[21]]
-            if not atom_lines:
-                pass
-                # TODO search for all indices with ATOM at beginning
-                # TODO set edit_chain to true
+            atom_lines: list[bool] = [bool(atom_line[21].strip()) for atom_line in file_content
+                                      if atom_line.startswith('ATOM') and atom_line[21]]
+            if len(set(atom_lines)) >= 2:
+                raise ChainIdentifierIrregularityError
+            if len(set(atom_lines)) == 1 and False in atom_lines:
+                self.edit_chain = True
+                self.chain_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
 
     def check_drop_rna_dna(self) -> None:
-        pass
+        with open(self.filename, 'r') as file:
+            file_content: list = file.readlines()
+            atom_lines: list[bool] = [bool(atom_line[21].strip()) for atom_line in file_content
+                                      if atom_line.startswith('ATOM') and atom_line[18]]
+            if "D" or "R" in set(atom_lines):
+                self.edit_chain = True
+                self.chain_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
+
+
+class ChainIdentifierIrregularityError(Exception):
+    pass
