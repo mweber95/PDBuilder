@@ -1,5 +1,7 @@
 import argparse
 
+from main import content
+
 
 def compare_args_and_possibility(args: argparse.Namespace) -> dict:
     pdb_edits: dict = get_possibilities(args)
@@ -43,7 +45,7 @@ def alter_rna_dna(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
         if i in edits:
-            line = line[:18] + ' ' + line[18:]
+            line = line[:18] + ' ' + line[19:]
         altered_content.append(line)
     return altered_content
 
@@ -96,12 +98,18 @@ class CheckPossibilities:
     def check_drop_rna_dna(self) -> None:
         with open(self.filename, 'r') as file:
             file_content: list = file.readlines()
-            atom_lines: list[bool] = [bool(atom_line[21].strip()) for atom_line in file_content
+            atom_lines: list[bool] = [atom_line[18].strip() for atom_line in file_content
                                       if atom_line.startswith('ATOM') and atom_line[18]]
             if "D" or "R" in set(atom_lines):
-                self.edit_chain = True
-                self.chain_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
+                self.edit_rna_dna = True
+                self.rna_dna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
 
 
 class ChainIdentifierIrregularityError(Exception):
     pass
+
+
+def write_content(filename: str) -> None:
+    with open(filename, 'w') as file:
+        for line in content:
+            file.write(f'{line}')
