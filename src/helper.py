@@ -1,27 +1,36 @@
 import argparse
+from src.exceptions import ChainIdentifierIrregularityError
+from enum import Enum, unique
 
-from main import content
+
+@unique
+class Operations(Enum):
+    Ter = 'ter'
+    ChainID = 'chain_id'
+    RnaDna = 'rna_dna'
+
+
+@unique
+class Characters(Enum):
+    Rna = 'R'
+    Dna = 'D'
+    Chain = 'A'
+    Empty = ' '
 
 
 def compare_args_and_possibility(args: argparse.Namespace) -> dict:
     pdb_edits: dict = get_possibilities(args)
     possible_edits: list = [arg for arg in vars(args) if arg in pdb_edits and pdb_edits[arg]]
-    desired_edits = [k for k, v in vars(args).items() if v and type(v) == bool]
+    desired_edits = [k for k, v in vars(args).items() if type(v) == bool]
     edit_intersection = set(desired_edits).intersection(set(possible_edits))
     return {k: v[1] for k, v in pdb_edits.items() if k in edit_intersection}
 
 
 def get_possibilities(args: argparse.Namespace):
     check = CheckPossibilities(args)
-    return {'ter': (check.edit_ter, check.ter_lines),
-            'chain_id': (check.edit_chain, check.chain_lines),
-            'rna_dna': (check.edit_rna_dna, check.rna_dna_lines)}
-
-
-def get_file_content_input_file(filename: str) -> list[str]:
-    with open(filename, 'r') as file:
-        file_content = file.readlines()
-    return file_content
+    return {Operations.Ter: (check.edit_ter, check.ter_lines),
+            Operations.ChainID: (check.edit_chain, check.chain_lines),
+            Operations.RnaDna: (check.edit_rna_dna, check.rna_dna_lines)}
 
 
 def alter_ter(content: list[str], edits: list) -> list[str]:
@@ -36,7 +45,7 @@ def alter_chain(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
         if i in edits:
-            line = line[:21] + 'A' + line[22:]
+            line = line[:21] + Characters.Chain.value + line[22:]
         altered_content.append(line)
     return altered_content
 
@@ -45,7 +54,7 @@ def alter_rna_dna(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
         if i in edits:
-            line = line[:18] + ' ' + line[19:]
+            line = line[:18] + Characters.Empty.value + line[19:]
         altered_content.append(line)
     return altered_content
 
@@ -69,14 +78,15 @@ class CheckPossibilities:
             for i, line in enumerate(file_content):
                 line = line.strip()
                 try:
-                    if line == 'TER' and file_content[i+1].strip() == 'TER':
+                    if line == Operations.Ter.upper() and file_content[i+1].strip() == Operations.Ter.upper():
                         self.edit_ter = True
                         self.ter_lines.append(i)
                 except IndexError:
                     print(f'Found TER as last line in file, which causes IndexError -> please take a look at the file')
                     self.edit_ter = True
                     self.ter_lines.append(i)
-                if line == 'TER' and file_content[i-1].startswith('ATOM') and file_content[i+1].startswith('ATOM'):
+                if line == Operations.Ter.upper() and file_content[i-1].startswith('ATOM')\
+                        and file_content[i+1].startswith('ATOM'):
                     if file_content[i-1].strip()[21] == file_content[i+1].strip()[21] or \
                             not file_content[i-1].strip()[21] or \
                             not file_content[i+1].strip()[21]:
@@ -100,16 +110,6 @@ class CheckPossibilities:
             file_content: list = file.readlines()
             atom_lines: list[bool] = [atom_line[18].strip() for atom_line in file_content
                                       if atom_line.startswith('ATOM') and atom_line[18]]
-            if "D" or "R" in set(atom_lines):
+            if Characters.Dna.value or Characters.Rna.value in set(atom_lines):
                 self.edit_rna_dna = True
                 self.rna_dna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
-
-
-class ChainIdentifierIrregularityError(Exception):
-    pass
-
-
-def write_content(filename: str) -> None:
-    with open(filename, 'w') as file:
-        for line in content:
-            file.write(f'{line}')

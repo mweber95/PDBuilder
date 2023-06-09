@@ -1,0 +1,2 @@
+class ChainIdentifierIrregularityError(Exception):
+    pass
