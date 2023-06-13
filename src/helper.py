@@ -20,10 +20,10 @@ class Characters(Enum):
 
 def compare_args_and_possibility(args: argparse.Namespace) -> dict:
     pdb_edits: dict = get_possibilities(args)
-    possible_edits: list = [arg for arg in vars(args) if arg in pdb_edits and pdb_edits[arg]]
-    desired_edits = [k for k, v in vars(args).items() if type(v) == bool]
-    edit_intersection = set(desired_edits).intersection(set(possible_edits))
-    return {k: v[1] for k, v in pdb_edits.items() if k in edit_intersection}
+    filter_pdb_edits: list = [k for k, v in pdb_edits.items() if v[0]]
+    desired_edits: list = [k for k, v in args.__dict__.items() if type(v) == bool and v]
+    edit_intersection = set(desired_edits).intersection(set(filter_pdb_edits))
+    return {k: v for k, v in pdb_edits.items() if k in edit_intersection}
 
 
 def get_possibilities(args: argparse.Namespace):
