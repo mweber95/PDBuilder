@@ -9,9 +9,9 @@ if __name__ == "__main__":
 
     if Operations.ChainID.value in edits:
         content: list[str] = alter_chain(content, edits[Operations.ChainID.value])
-    if Operations.Ter.value in edits:
-        content: list[str] = alter_ter(content, edits[Operations.Ter.value])
     if Operations.RnaDna.value in edits:
         content: list[str] = alter_rna_dna(content, edits[Operations.RnaDna.value])
+    if Operations.Ter.value in edits:
+        content: list[str] = alter_ter(content, edits[Operations.Ter.value])
 
     write_content_to_output(args.output_filename, content)
