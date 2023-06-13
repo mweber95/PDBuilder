@@ -28,9 +28,9 @@ def compare_args_and_possibility(args: argparse.Namespace) -> dict:
 
 def get_possibilities(args: argparse.Namespace):
     check = CheckPossibilities(args)
-    return {Operations.Ter: (check.edit_ter, check.ter_lines),
-            Operations.ChainID: (check.edit_chain, check.chain_lines),
-            Operations.RnaDna: (check.edit_rna_dna, check.rna_dna_lines)}
+    return {Operations.Ter.value: (check.edit_ter, check.ter_lines),
+            Operations.ChainID.value: (check.edit_chain, check.chain_lines),
+            Operations.RnaDna.value: (check.edit_rna_dna, check.rna_dna_lines)}
 
 
 def alter_ter(content: list[str], edits: list) -> list[str]:
@@ -78,14 +78,14 @@ class CheckPossibilities:
             for i, line in enumerate(file_content):
                 line = line.strip()
                 try:
-                    if line == Operations.Ter.upper() and file_content[i+1].strip() == Operations.Ter.upper():
+                    if line == Operations.Ter.value.upper() and file_content[i+1].strip() == Operations.Ter.value.upper():
                         self.edit_ter = True
                         self.ter_lines.append(i)
                 except IndexError:
                     print(f'Found TER as last line in file, which causes IndexError -> please take a look at the file')
                     self.edit_ter = True
                     self.ter_lines.append(i)
-                if line == Operations.Ter.upper() and file_content[i-1].startswith('ATOM')\
+                if line == Operations.Ter.value.upper() and file_content[i-1].startswith('ATOM')\
                         and file_content[i+1].startswith('ATOM'):
                     if file_content[i-1].strip()[21] == file_content[i+1].strip()[21] or \
                             not file_content[i-1].strip()[21] or \
