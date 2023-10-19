@@ -36,7 +36,7 @@ def get_possibilities(args: argparse.Namespace):
 def alter_ter(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
-        if i not in edits:
+        if i not in edits[-1]:
             altered_content.append(line)
     return altered_content
 
@@ -44,7 +44,7 @@ def alter_ter(content: list[str], edits: list) -> list[str]:
 def alter_chain(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
-        if i in edits:
+        if i in edits[-1]:
             line = line[:21] + Characters.Chain.value + line[22:]
         altered_content.append(line)
     return altered_content
@@ -53,7 +53,7 @@ def alter_chain(content: list[str], edits: list) -> list[str]:
 def alter_rna_dna(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
-        if i in edits:
+        if i in edits[-1]:
             line = line[:18] + Characters.Empty.value + line[19:]
         altered_content.append(line)
     return altered_content
