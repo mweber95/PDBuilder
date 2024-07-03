@@ -3,11 +3,12 @@ from src.exceptions import ChainIdentifierIrregularityError
 from enum import Enum, unique
 
 
-@unique
 class Operations(Enum):
     Ter = 'ter'
     ChainID = 'chain_id'
-    RnaDna = 'rna_dna'
+    RemoveRnaDna = 'remove_rna_dna'
+    AddRna = 'add_rna'
+    AddDna = 'add_dna'
 
 
 @unique
@@ -30,7 +31,9 @@ def get_possibilities(args: argparse.Namespace):
     check = CheckPossibilities(args)
     return {Operations.Ter.value: (check.edit_ter, check.ter_lines),
             Operations.ChainID.value: (check.edit_chain, check.chain_lines),
-            Operations.RnaDna.value: (check.edit_rna_dna, check.rna_dna_lines)}
+            Operations.RemoveRnaDna.value: (check.remove_rna_dna, check.remove_rna_dna_lines),
+            Operations.AddDna.value: (check.add_dna, check.add_dna_lines),
+            Operations.AddRna.value: (check.add_rna, check.add_rna_lines)}
 
 
 def alter_ter(content: list[str], edits: list) -> list[str]:
@@ -50,7 +53,7 @@ def alter_chain(content: list[str], edits: list) -> list[str]:
     return altered_content
 
 
-def alter_rna_dna(content: list[str], edits: list) -> list[str]:
+def remove_rna_dna(content: list[str], edits: list) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
         if i in edits[-1]:
@@ -59,18 +62,33 @@ def alter_rna_dna(content: list[str], edits: list) -> list[str]:
     return altered_content
 
 
+def add_rna_dna(content: list[str], edits: list, value: str) -> list[str]:
+    altered_content = []
+    for i, line in enumerate(content):
+        if i in edits[-1]:
+            line = line[:19] + value + line[19:]
+        altered_content.append(line)
+    return altered_content
+
+
 class CheckPossibilities:
     def __init__(self, args: argparse.Namespace):
-        self.filename: str = args.input_filename
+        self.args = args
+        self.filename: str = self.args.input_filename
         self.edit_ter: bool = False
         self.ter_lines: list[int] = []
         self.edit_chain: bool = False
         self.chain_lines: list[int] = []
-        self.edit_rna_dna: bool = False
-        self.rna_dna_lines: list[int] = []
+        self.remove_rna_dna: bool = False
+        self.remove_rna_dna_lines: list[int] = []
+        self.add_rna: bool = False
+        self.add_dna: bool = False
+        self.add_rna_lines: list[int] = []
+        self.add_dna_lines: list[int] = []
         self.check_ter()
         self.check_chain()
         self.check_drop_rna_dna()
+        self.check_add_rna_dna()
 
     def check_ter(self) -> None:
         with open(self.filename, 'r') as file:
@@ -110,6 +128,17 @@ class CheckPossibilities:
             file_content: list = file.readlines()
             atom_lines: list[bool] = [atom_line[18].strip() for atom_line in file_content
                                       if atom_line.startswith('ATOM') and atom_line[18]]
-            if Characters.Dna.value or Characters.Rna.value in set(atom_lines):
-                self.edit_rna_dna = True
-                self.rna_dna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
+            if (Characters.Dna.value or Characters.Rna.value) in set(atom_lines):
+                self.remove_rna_dna = True
+                self.remove_rna_dna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
+
+    def check_add_rna_dna(self) -> None:
+        with open(self.filename, 'r') as file:
+            file_content: list = file.readlines()
+            atom_lines: list[bool] = [atom_line[19].strip() for atom_line in file_content
+                                      if atom_line.startswith('ATOM') and atom_line[19]]
+            if Characters.Dna.value and Characters.Rna.value not in set(atom_lines):
+                self.add_dna = True
+                self.add_dna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
+                self.add_rna = True
+                self.add_rna_lines = [i for i in range(len(file_content)) if file_content[i].startswith('ATOM')]
