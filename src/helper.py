@@ -66,7 +66,7 @@ def add_rna_dna(content: list[str], edits: list, value: str) -> list[str]:
     altered_content = []
     for i, line in enumerate(content):
         if i in edits[-1]:
-            line = line[:19] + value + line[19:]
+            line = line[:18] + value + line[19:]
         altered_content.append(line)
     return altered_content
 
